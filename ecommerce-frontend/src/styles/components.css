@@ -1,0 +1,255 @@
+/* src/styles/components.css */
+
+/* ===============================================
+   BUTTON COMPONENTS
+   =============================================== */
+
+.btn-primary {
+  @apply bg-gradient-to-r from-emerald-500 to-emerald-600;
+  @apply hover:from-emerald-600 hover:to-emerald-700;
+  @apply text-white font-semibold py-3 px-6 rounded-xl;
+  @apply transition-all duration-300 ease-out;
+  @apply transform hover:scale-105 hover:shadow-lg;
+  @apply focus:outline-none focus:ring-4 focus:ring-emerald-500/30;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply disabled:hover:scale-100 disabled:hover:shadow-none;
+}
+
+.btn-secondary {
+  @apply bg-gray-700 hover:bg-gray-600;
+  @apply text-white font-semibold py-3 px-6 rounded-xl;
+  @apply transition-all duration-300 ease-out;
+  @apply border border-gray-600 hover:border-gray-500;
+  @apply focus:outline-none focus:ring-4 focus:ring-gray-500/30;
+}
+
+.btn-outline {
+  @apply bg-transparent hover:bg-emerald-500/10;
+  @apply text-emerald-400 hover:text-emerald-300;
+  @apply font-semibold py-3 px-6 rounded-xl;
+  @apply border-2 border-emerald-400 hover:border-emerald-300;
+  @apply transition-all duration-300 ease-out;
+  @apply focus:outline-none focus:ring-4 focus:ring-emerald-500/30;
+}
+
+.btn-ghost {
+  @apply bg-transparent hover:bg-white/10;
+  @apply text-gray-300 hover:text-white;
+  @apply font-medium py-2 px-4 rounded-lg;
+  @apply transition-all duration-200 ease-out;
+}
+
+.btn-danger {
+  @apply bg-red-600 hover:bg-red-700;
+  @apply text-white font-semibold py-3 px-6 rounded-xl;
+  @apply transition-all duration-300 ease-out;
+  @apply focus:outline-none focus:ring-4 focus:ring-red-500/30;
+}
+
+.btn-success {
+  @apply bg-green-600 hover:bg-green-700;
+  @apply text-white font-semibold py-3 px-6 rounded-xl;
+  @apply transition-all duration-300 ease-out;
+  @apply focus:outline-none focus:ring-4 focus:ring-green-500/30;
+}
+
+.btn-sm {
+  @apply py-2 px-4 text-sm;
+}
+
+.btn-lg {
+  @apply py-4 px-8 text-lg;
+}
+
+.btn-icon {
+  @apply p-3 rounded-full flex items-center justify-center;
+  @apply transition-all duration-200 ease-out;
+}
+
+.btn-loading {
+  @apply relative cursor-not-allowed;
+}
+
+.btn-loading::after {
+  content: '';
+  @apply absolute inset-0 flex items-center justify-center;
+  @apply w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin;
+}
+
+/* ===============================================
+   CARD COMPONENTS
+   =============================================== */
+
+.card {
+  @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl;
+  @apply transition-all duration-300 ease-out;
+}
+
+.card-hover {
+  @apply hover:bg-white/15 hover:border-white/30 hover:shadow-2xl hover:scale-105 cursor-pointer;
+}
+
+.card-glass {
+  @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
+}
+
+.card-solid {
+  @apply bg-gray-800 border-gray-700;
+}
+
+.card-gradient {
+  @apply bg-gradient-to-br from-white/10 to-white/5 border-0 shadow-2xl;
+}
+
+.card-header {
+  @apply p-6 border-b border-white/10;
+}
+
+.card-body {
+  @apply p-6;
+}
+
+.card-footer {
+  @apply p-6 border-t border-white/10 bg-white/5 rounded-b-2xl;
+}
+
+/* ===============================================
+   INPUT COMPONENTS
+   =============================================== */
+
+.input-primary {
+  @apply w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-3;
+  @apply text-white placeholder-gray-400;
+  @apply transition-all duration-300 ease-out;
+  @apply focus:outline-none focus:ring-4 focus:ring-emerald-500/30 focus:border-emerald-400 focus:bg-white/15;
+}
+
+.input-error {
+  @apply border-red-400 focus:ring-red-500/30 focus:border-red-400;
+}
+
+.input-success {
+  @apply border-green-400 focus:ring-green-500/30 focus:border-green-400;
+}
+
+.input-group {
+  @apply relative;
+}
+
+.input-icon-left {
+  @apply pl-12;
+}
+
+.input-icon-right {
+  @apply pr-12;
+}
+
+.input-icon {
+  @apply absolute top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none;
+}
+
+.input-icon-left-pos {
+  @apply left-4;
+}
+
+.input-icon-right-pos {
+  @apply right-4;
+}
+
+.textarea-primary {
+  @apply input-primary resize-none min-h-[120px];
+}
+
+.select-primary {
+  @apply input-primary appearance-none cursor-pointer;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+}
+
+/* ===============================================
+   TOOLTIP COMPONENTS
+   =============================================== */
+
+.tooltip {
+  @apply relative; /* remove 'group' */
+}
+
+.tooltip-content {
+  @apply absolute z-50 px-3 py-2 bg-gray-900 text-white text-sm border border-white/20 rounded-lg shadow-xl;
+  @apply opacity-0 invisible transform transition-all duration-200 pointer-events-none;
+}
+
+/* Example: add 'group' in HTML like <div class="tooltip group"> */
+.tooltip:hover .tooltip-content {
+  @apply opacity-100 visible pointer-events-auto;
+}
+
+/* Positions */
+.tooltip-top .tooltip-content {
+  @apply bottom-full left-1/2 transform -translate-x-1/2 mb-2 translate-y-2;
+}
+.tooltip:hover .tooltip-top .tooltip-content {
+  @apply translate-y-0;
+}
+
+.tooltip-bottom .tooltip-content {
+  @apply top-full left-1/2 transform -translate-x-1/2 mt-2 -translate-y-2;
+}
+.tooltip:hover .tooltip-bottom .tooltip-content {
+  @apply translate-y-0;
+}
+
+.tooltip-left .tooltip-content {
+  @apply right-full top-1/2 transform -translate-y-1/2 mr-2 translate-x-2;
+}
+.tooltip:hover .tooltip-left .tooltip-content {
+  @apply translate-x-0;
+}
+
+.tooltip-right .tooltip-content {
+  @apply left-full top-1/2 transform -translate-y-1/2 ml-2 -translate-x-2;
+}
+.tooltip:hover .tooltip-right .tooltip-content {
+  @apply translate-x-0;
+}
+
+/* ===============================================
+   PROGRESS COMPONENTS
+   =============================================== */
+
+.progress-bar {
+  @apply w-full bg-gray-700 rounded-full h-2 overflow-hidden;
+}
+
+.progress-fill {
+  @apply h-full bg-gradient-to-r from-emerald-500 to-emerald-600 relative transition-all duration-500 ease-out;
+}
+
+.progress-fill::after {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer;
+}
+
+/* ===============================================
+   LOADING DOTS
+   =============================================== */
+
+.loading-dots {
+  @apply flex space-x-2;
+}
+
+.loading-dot {
+  @apply w-2 h-2 bg-emerald-400 rounded-full animate-bounce;
+}
+
+.loading-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+.loading-dot:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.loading-dot:nth-child(3) {
+  animation-delay: 0.2s;
+}

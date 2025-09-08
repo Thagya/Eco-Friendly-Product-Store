@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/https://github.com/Thagya/Eco-Friendly-Product-Store.git/static/css/main.7f2ce8d3.css",
-    "main.js": "/https://github.com/Thagya/Eco-Friendly-Product-Store.git/static/js/main.fffb089d.js",
+    "main.js": "/https://github.com/Thagya/Eco-Friendly-Product-Store.git/static/js/main.d02df402.js",
     "index.html": "/https://github.com/Thagya/Eco-Friendly-Product-Store.git/index.html",
     "main.7f2ce8d3.css.map": "/https://github.com/Thagya/Eco-Friendly-Product-Store.git/static/css/main.7f2ce8d3.css.map",
-    "main.fffb089d.js.map": "/https://github.com/Thagya/Eco-Friendly-Product-Store.git/static/js/main.fffb089d.js.map"
+    "main.d02df402.js.map": "/https://github.com/Thagya/Eco-Friendly-Product-Store.git/static/js/main.d02df402.js.map"
   },
   "entrypoints": [
     "static/css/main.7f2ce8d3.css",
-    "static/js/main.fffb089d.js"
+    "static/js/main.d02df402.js"
   ]
 }

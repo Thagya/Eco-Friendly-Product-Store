@@ -1,0 +1,19 @@
+"node_modules/"
+".env"
+"dist/"
+"build/"
+.env
+"ecommerce-backend/.env"
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+# Node modules
+ecommerce-frontend/node_modules/
+ecommerce-backend/node_modules/
+
+# Env files
+*.env
+
+# Build folder (React)
+frontend/build/

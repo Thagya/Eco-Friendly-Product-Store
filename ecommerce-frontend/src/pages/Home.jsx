@@ -1,7 +1,7 @@
-// src/pages/Home.jsx
-import React, { Suspense } from 'react';
+// src/pages/Home.jsx - FIXED WITH PRODUCT IMAGES
+import React, { Suspense, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Sphere, MeshDistortMaterial, Float } from '@react-three/drei';
@@ -13,8 +13,10 @@ import {
   ArrowRight,
   Star,
   Users,
-  Package
+  Package,
+  Eye
 } from 'lucide-react';
+import { fetchProducts } from '../store/productsSlice';
 
 // 3D Hero Scene
 function HeroScene() {
@@ -101,49 +103,144 @@ const FeatureCard = ({ icon: Icon, title, description, delay }) => (
   </motion.div>
 );
 
-// Product Card Component
-const ProductCard = ({ product, delay }) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.8 }}
-    whileInView={{ opacity: 1, scale: 1 }}
-    transition={{ duration: 0.5, delay }}
-    whileHover={{ 
-      scale: 1.05,
-      rotateY: 10,
-      z: 50
-    }}
-    className="group relative bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 hover:border-eco-green/50 overflow-hidden transition-all duration-300"
-    style={{ transformStyle: 'preserve-3d' }}
-  >
-    <div className="aspect-w-1 aspect-h-1 bg-gradient-to-br from-eco-green/20 to-eco-leaf/20 p-8 flex items-center justify-center">
-      <Package className="w-16 h-16 text-eco-green group-hover:scale-110 transition-transform" />
-    </div>
-    
-    <div className="p-4">
-      <h3 className="font-semibold text-white group-hover:text-eco-green transition-colors">
-        {product.name}
-      </h3>
-      <p className="text-sm text-gray-400 mt-1 line-clamp-2">
-        {product.description}
-      </p>
-      <div className="flex items-center justify-between mt-3">
-        <span className="text-lg font-bold text-eco-green">
-          ${product.price}
-        </span>
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className="p-2 bg-eco-green/20 hover:bg-eco-green/40 rounded-lg transition-colors"
-        >
-          <ShoppingBag className="w-4 h-4 text-eco-green" />
-        </motion.button>
-      </div>
-    </div>
-  </motion.div>
-);
+// Enhanced Product Card Component with images
+const ProductCard = ({ product, delay }) => {
+  const [imageError, setImageError] = React.useState(false);
+  
+  // Helper function to get image URL
+  const getImageUrl = (image) => {
+    if (!image) return null;
+    if (image.startsWith('data:image/')) return image; // Base64
+    if (image.startsWith('http')) return image; // Full URL
+    return image; // Return as is
+  };
+
+  const productImage = getImageUrl(product.image);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5, delay }}
+      whileHover={{ 
+        scale: 1.05,
+        rotateY: 10,
+        z: 50
+      }}
+      className="group relative bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 hover:border-eco-green/50 overflow-hidden transition-all duration-300"
+      style={{ transformStyle: 'preserve-3d' }}
+    >
+      <Link to={`/products/${product._id}`} className="block">
+        {/* Image container */}
+        <div className="relative aspect-w-1 aspect-h-1 h-48 bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden">
+          {productImage && !imageError ? (
+            <img
+              src={productImage}
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              onError={() => setImageError(true)}
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-eco-green/20 to-eco-leaf/20 flex items-center justify-center">
+              <Package className="w-16 h-16 text-eco-green group-hover:scale-110 transition-transform" />
+            </div>
+          )}
+
+          {/* Overlay with actions */}
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-3">
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="p-2 bg-white/20 text-white hover:bg-white/30 rounded-full transition-colors cursor-pointer"
+              title="View Product"
+            >
+              <Eye className="w-5 h-5" />
+            </motion.div>
+            
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Add to cart logic here
+              }}
+              className="p-2 bg-eco-green/80 hover:bg-eco-green text-white rounded-full transition-colors"
+              title="Add to Cart"
+            >
+              <ShoppingBag className="w-5 h-5" />
+            </motion.button>
+          </div>
+
+          {/* Stock badge */}
+          <div className="absolute top-3 right-3">
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              product.stock > 10
+                ? "bg-green-500/80 text-green-100"
+                : product.stock > 0
+                ? "bg-yellow-500/80 text-yellow-100"
+                : "bg-red-500/80 text-red-100"
+            }`}>
+              {product.stock > 0 ? `${product.stock} left` : "Out of stock"}
+            </span>
+          </div>
+        </div>
+        
+        {/* Product info */}
+        <div className="p-4">
+          <div className="mb-3">
+            <h3 className="text-lg font-semibold text-white truncate group-hover:text-eco-green transition-colors">
+              {product.name}
+            </h3>
+            <p className="text-gray-400 text-sm mt-1 line-clamp-2 leading-relaxed">
+              {product.description}
+            </p>
+          </div>
+
+          {/* Category */}
+          <div className="mb-3">
+            <span className="inline-block px-2 py-1 bg-eco-green/20 text-eco-green text-xs font-medium rounded-full">
+              {product.category}
+            </span>
+          </div>
+
+          {/* Price and rating */}
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-2xl font-bold text-eco-green">
+                ${product.price}
+              </span>
+              <div className="flex items-center space-x-1 mt-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-3 h-3 ${
+                      i < 4 ? 'text-yellow-400 fill-current' : 'text-gray-600'
+                    }`}
+                  />
+                ))}
+                <span className="text-xs text-gray-400 ml-1">(4.2)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Link>
+    </motion.div>
+  );
+};
 
 const Home = () => {
-  const { products } = useSelector((state) => state.products);
+  const dispatch = useDispatch();
+  const { products, isLoading } = useSelector((state) => state.products);
+  
+  // Load products when component mounts
+  useEffect(() => {
+    if (products.length === 0 && !isLoading) {
+      dispatch(fetchProducts());
+    }
+  }, [dispatch, products.length, isLoading]);
+  
   const featuredProducts = products.slice(0, 6);
 
   const features = [
@@ -180,7 +277,7 @@ const Home = () => {
           className="absolute inset-0 z-0 bg-cover bg-center"
           style={{ backgroundImage: 'url(/assets/images/backgrounds/hero2.jpg)' }}
         >
-          <div className="absolute inset-0 bg-black/50"></div> {/* optional overlay */}
+          <div className="absolute inset-0 bg-black/50"></div>
           <HeroScene />
         </div>
 
@@ -325,15 +422,29 @@ const Home = () => {
             </p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {featuredProducts.map((product, index) => (
-              <ProductCard
-                key={product._id}
-                product={product}
-                delay={index * 0.1}
-              />
-            ))}
-          </div>
+          {/* Products Grid */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="w-8 h-8 border-4 border-eco-green border-t-transparent rounded-full animate-spin mr-3"></div>
+              <span className="text-gray-400">Loading products...</span>
+            </div>
+          ) : featuredProducts.length > 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+              {featuredProducts.map((product, index) => (
+                <ProductCard
+                  key={product._id}
+                  product={product}
+                  delay={index * 0.1}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <Package className="w-24 h-24 text-gray-600 mx-auto mb-4" />
+              <h3 className="text-2xl font-semibold text-white mb-2">No products yet</h3>
+              <p className="text-gray-400 mb-6">Check back soon for amazing eco-friendly products!</p>
+            </div>
+          )}
 
           <motion.div
             initial={{ opacity: 0 }}

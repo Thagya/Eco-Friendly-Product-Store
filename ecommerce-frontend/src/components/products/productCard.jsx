@@ -1,12 +1,20 @@
-// src/components/products/ProductCard.jsx
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Package, ShoppingCart, Eye, Heart } from "lucide-react";
 import { useCart } from "../../hooks/useCart";
 import { useAuth } from "../../hooks/useAuth";
 
+// Helper function to get image URL
+const getImageUrl = (image) => {
+  if (!image) return null;
+  if (image.startsWith('data:image/')) return image; // Base64
+  if (image.startsWith('http')) return image; // Full URL
+  return image; // Return as is
+};
+
 const ProductCard = ({ product }) => {
+  const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
@@ -19,21 +27,43 @@ const ProductCard = ({ product }) => {
     e.stopPropagation();
     
     if (!isAuthenticated) {
-      // redirect to login or show login modal
+      alert('Please login to add items to cart');
+      navigate('/login');
+      return;
+    }
+
+    if (product.stock === 0) {
+      alert('This product is out of stock');
       return;
     }
 
     setIsAddingToCart(true);
     try {
-      await addToCart(product._id, 1);
+      await addToCart({ productId: product._id, quantity: 1 });
     } catch (error) {
       console.error('Failed to add to cart:', error);
+      alert('Failed to add to cart. Please try again.');
     } finally {
       setIsAddingToCart(false);
     }
   };
 
+  const handleViewProduct = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/products/${product._id}`);
+  };
+
+  const handleLike = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsLiked(!isLiked);
+  };
+
   const inCart = isInCart(product._id);
+  const productImage = getImageUrl(product.image);
+
+  if (!product) return null;
 
   return (
     <motion.div
@@ -42,13 +72,12 @@ const ProductCard = ({ product }) => {
       animate={{ opacity: 1, y: 0 }}
       className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 overflow-hidden shadow-lg hover:shadow-eco-green/20 hover:border-eco-green/30 transition-all duration-300 group"
     >
-      {/* Link wraps the entire card content */}
-      <Link to={`/products/${product._id}`} className="block">
-        {/* Image container */}
+      <div className="relative">
+        {/* Image */}
         <div className="relative w-full h-48 bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden">
-          {product.image && !imageError ? (
+          {productImage && !imageError ? (
             <img
-              src={product.image}
+              src={productImage}
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               onError={() => setImageError(true)}
@@ -60,35 +89,29 @@ const ProductCard = ({ product }) => {
             </div>
           )}
 
-          {/* Overlay quick actions */}
+          {/* Quick actions */}
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-3">
-            {/* Like button */}
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsLiked(!isLiked);
-              }}
-              className={`p-2 rounded-full transition-colors ${
+              onClick={handleLike}
+              className={`p-2 rounded-full ${
                 isLiked ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'
               }`}
+              title="Add to Wishlist"
             >
               <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
             </motion.button>
 
-            {/* Eye icon navigation */}
-            <Link to={`/products/${product._id}`} onClick={(e) => e.stopPropagation()}>
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="p-2 bg-white/20 text-white hover:bg-white/30 rounded-full transition-colors cursor-pointer"
-                title="View Product"
-              >
-                <Eye className="w-5 h-5" />
-              </motion.div>
-            </Link>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={handleViewProduct}
+              className="p-2 bg-white/20 text-white hover:bg-white/30 rounded-full"
+              title="View Product Details"
+            >
+              <Eye className="w-5 h-5" />
+            </motion.button>
           </div>
 
           {/* Stock badge */}
@@ -105,43 +128,39 @@ const ProductCard = ({ product }) => {
           </div>
         </div>
 
-        {/* Product info */}
-        <div className="p-4">
+        {/* Info */}
+        <Link to={`/products/${product._id}`} className="block p-4 hover:bg-white/5 transition-colors">
           <div className="mb-3">
             <h3 className="text-lg font-semibold text-white truncate group-hover:text-eco-green transition-colors">
               {product.name}
             </h3>
-            <p className="text-gray-400 text-sm mt-1 line-clamp-2 leading-relaxed">
+            <p className="text-gray-400 text-sm mt-1 line-clamp-2">
               {product.description}
             </p>
           </div>
 
-          {/* Category */}
           <div className="mb-3">
-            <span className="inline-block px-2 py-1 bg-eco-green/20 text-eco-green text-xs font-medium rounded-full">
+            <span className="inline-block px-2 py-1 bg-eco-green/20 text-eco-green text-xs rounded-full">
               {product.category}
             </span>
           </div>
 
-          {/* Price and Add to Cart */}
           <div className="flex items-center justify-between">
-            <div>
-              <span className="text-2xl font-bold text-eco-green">
-                ${product.price}
-              </span>
-            </div>
+            <span className="text-2xl font-bold text-eco-green">
+              ${product.price}
+            </span>
 
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleAddToCart}
               disabled={product.stock === 0 || isAddingToCart}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all ${
                 product.stock === 0
                   ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
                   : inCart
                   ? 'bg-eco-green/20 text-eco-green border border-eco-green'
-                  : 'bg-eco-green hover:bg-eco-leaf text-white hover:shadow-lg hover:shadow-eco-green/25'
+                  : 'bg-eco-green hover:bg-eco-leaf text-white'
               }`}
             >
               {isAddingToCart ? (
@@ -150,19 +169,14 @@ const ProductCard = ({ product }) => {
                 <>
                   <ShoppingCart className="w-4 h-4" />
                   <span className="text-sm">
-                    {product.stock === 0 
-                      ? 'Out of Stock' 
-                      : inCart 
-                      ? 'In Cart' 
-                      : 'Add to Cart'
-                    }
+                    {product.stock === 0 ? 'Out of Stock' : inCart ? 'In Cart' : 'Add to Cart'}
                   </span>
                 </>
               )}
             </motion.button>
           </div>
-        </div>
-      </Link>
+        </Link>
+      </div>
     </motion.div>
   );
 };

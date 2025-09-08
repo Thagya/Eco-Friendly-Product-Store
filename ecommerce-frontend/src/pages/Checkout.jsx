@@ -81,32 +81,52 @@ Debug Info:
   const tax = totalPrice * 0.08;
   const finalTotal = totalPrice + shipping + tax;
 
-  const validateBillingInfo = () => {
-    const newErrors = {};
-    
-    if (!billingInfo.firstName.trim()) newErrors.firstName = 'First name is required';
-    if (!billingInfo.lastName.trim()) newErrors.lastName = 'Last name is required';
-    if (!billingInfo.email.trim()) newErrors.email = 'Email is required';
-    if (!billingInfo.phone.trim()) newErrors.phone = 'Phone is required';
-    if (!billingInfo.address.trim()) newErrors.address = 'Address is required';
-    if (!billingInfo.city.trim()) newErrors.city = 'City is required';
-    if (!billingInfo.zipCode.trim()) newErrors.zipCode = 'ZIP code is required';
-    
+  // --- VALIDATION FUNCTION ---
+const validateBillingInfo = () => {
+  const newErrors = {};
+
+  if (!billingInfo.firstName.trim()) newErrors.firstName = 'First name is required';
+  if (!billingInfo.lastName.trim()) newErrors.lastName = 'Last name is required';
+  if (!billingInfo.email.trim()) {
+    newErrors.email = 'Email is required';
+  } else {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (billingInfo.email && !emailRegex.test(billingInfo.email)) {
+    if (!emailRegex.test(billingInfo.email)) {
       newErrors.email = 'Please enter a valid email';
     }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleBillingInfoChange = (field, value) => {
-    setBillingInfo(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+  }
+  if (!billingInfo.phone.trim()) {
+    newErrors.phone = 'Phone is required';
+  } else {
+    const phoneRegex = /^[0-9]{9,15}$/; // simple phone validation
+    if (!phoneRegex.test(billingInfo.phone)) {
+      newErrors.phone = 'Phone must be 9–15 digits';
     }
-  };
+  }
+  if (!billingInfo.address.trim()) newErrors.address = 'Address is required';
+  if (!billingInfo.city.trim()) newErrors.city = 'City is required';
+  if (!billingInfo.zipCode.trim()) {
+    newErrors.zipCode = 'ZIP code is required';
+  } else {
+    const zipRegex = /^[0-9]{4,10}$/;
+    if (!zipRegex.test(billingInfo.zipCode)) {
+      newErrors.zipCode = 'Invalid ZIP code format';
+    }
+  }
+
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
+
+// --- HANDLE CHANGES WITH LIVE VALIDATION ---
+const handleBillingInfoChange = (field, value) => {
+  setBillingInfo((prev) => ({ ...prev, [field]: value }));
+
+  // re-validate only that field
+  if (errors[field]) {
+    setErrors((prev) => ({ ...prev, [field]: '' }));
+  }
+};
 
   const handleNextStep = () => {
     if (currentStep === 1) {

@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 
 import { fetchProductById, clearCurrentProduct } from '../store/productsSlice';
-import { addToCart, createCart, openCartDrawer } from '../store/cartSlice';
 import { useCart } from '../hooks/useCart';
 import Loading from '../components/common/Loading';
 
@@ -55,7 +54,8 @@ const QuantitySelector = ({ quantity, setQuantity, maxStock }) => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setQuantity(Math.min(maxStock, quantity + 1))}
-          className="p-2 text-gray-300 hover:text-white transition-colors"
+          disabled={quantity >= maxStock}
+          className="p-2 text-gray-300 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="w-4 h-4" />
         </motion.button>
@@ -88,17 +88,20 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   
-  const { currentProduct, isLoading } = useSelector((state) => state.products);
+  const { currentProduct, isLoading, error } = useSelector((state) => state.products);
   const { user, isAuthenticated } = useSelector((state) => state.auth);
-  const { cartId, addToCart: addToCartAction } = useCart();
+  const { addToCart: addToCartAction } = useCart();
   
   const [quantity, setQuantity] = useState(1);
   const [isLiked, setIsLiked] = useState(false);
   const [activeTab, setActiveTab] = useState('description');
   const [imageError, setImageError] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
+  // Fetch product when component mounts or ID changes
   useEffect(() => {
     if (id) {
+      console.log('Fetching product with ID:', id);
       dispatch(fetchProductById(id));
     }
     
@@ -106,6 +109,15 @@ const ProductDetail = () => {
       dispatch(clearCurrentProduct());
     };
   }, [dispatch, id]);
+
+  // Reset quantity when product changes
+  useEffect(() => {
+    if (currentProduct) {
+      setQuantity(1);
+      setImageError(false);
+      console.log('Product loaded:', currentProduct);
+    }
+  }, [currentProduct]);
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
@@ -119,13 +131,20 @@ const ProductDetail = () => {
       return;
     }
 
+    if (currentProduct.stock < quantity) {
+      alert('Not enough stock available');
+      return;
+    }
+
+    setIsAddingToCart(true);
     try {
-      await addToCartAction(currentProduct._id, quantity);
-      // Show success message (you can implement toast here)
+      await addToCartAction({ productId: currentProduct._id, quantity });
       alert('Added to cart successfully!');
     } catch (error) {
       console.error('Failed to add to cart:', error);
       alert('Failed to add to cart. Please try again.');
+    } finally {
+      setIsAddingToCart(false);
     }
   };
 
@@ -136,13 +155,21 @@ const ProductDetail = () => {
       return;
     }
 
+    if (currentProduct.stock < quantity) {
+      alert('Not enough stock available');
+      return;
+    }
+
     // Add to cart first, then navigate to checkout
+    setIsAddingToCart(true);
     try {
-      await addToCartAction(currentProduct._id, quantity);
+      await addToCartAction({ productId: currentProduct._id, quantity });
       navigate('/checkout');
     } catch (error) {
       console.error('Failed to add to cart:', error);
       alert('Failed to add to cart. Please try again.');
+    } finally {
+      setIsAddingToCart(false);
     }
   };
 
@@ -164,10 +191,31 @@ const ProductDetail = () => {
     }
   };
 
+  // Loading state
   if (isLoading) {
     return <Loading />;
   }
 
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Package className="w-24 h-24 text-gray-600 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">Error loading product</h2>
+          <p className="text-gray-400 mb-6">{error}</p>
+          <button
+            onClick={() => navigate('/products')}
+            className="px-6 py-3 bg-eco-green hover:bg-eco-leaf text-white font-semibold rounded-xl transition-colors"
+          >
+            Back to Products
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Product not found
   if (!currentProduct) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -218,7 +266,7 @@ const ProductDetail = () => {
   const productImage = getImageUrl(currentProduct.image);
 
   return (
-    <div className="min-h-screen pt-8">
+    <div className="min-h-screen pt-8 bg-gradient-to-br from-gray-900 via-gray-800 to-green-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Back Button */}
@@ -226,11 +274,11 @@ const ProductDetail = () => {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           whileHover={{ x: -5 }}
-          onClick={() => navigate('/products')}
+          onClick={() => navigate(-1)}
           className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors mb-8"
         >
           <ArrowLeft className="w-5 h-5" />
-          <span>Back to Products</span>
+          <span>Back</span>
         </motion.button>
 
         {/* Main Product Section */}
@@ -382,18 +430,24 @@ const ProductDetail = () => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleAddToCart}
-                disabled={currentProduct.stock === 0}
+                disabled={currentProduct.stock === 0 || isAddingToCart}
                 className="flex-1 flex items-center justify-center space-x-2 px-8 py-4 bg-gradient-to-r from-eco-green to-eco-leaf text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-eco-green/25 disabled:bg-gray-500 disabled:cursor-not-allowed transition-all duration-300"
               >
-                <ShoppingCart className="w-5 h-5" />
-                <span>{currentProduct.stock === 0 ? 'Out of Stock' : 'Add to Cart'}</span>
+                {isAddingToCart ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-5 h-5" />
+                    <span>{currentProduct.stock === 0 ? 'Out of Stock' : 'Add to Cart'}</span>
+                  </>
+                )}
               </motion.button>
 
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleBuyNow}
-                disabled={currentProduct.stock === 0}
+                disabled={currentProduct.stock === 0 || isAddingToCart}
                 className="flex items-center justify-center space-x-2 px-8 py-4 bg-white/10 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/20 disabled:bg-gray-500 disabled:cursor-not-allowed transition-all duration-300"
               >
                 <CreditCard className="w-5 h-5" />
@@ -468,6 +522,10 @@ const ProductDetail = () => {
                     <div className="flex justify-between">
                       <span>Material:</span>
                       <span>100% Recycled</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Product ID:</span>
+                      <span>{currentProduct._id}</span>
                     </div>
                   </div>
                 </div>

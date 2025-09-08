@@ -1,4 +1,3 @@
-// src/hooks/useCart.js
 import { useEffect, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useAuth } from './useAuth';
@@ -16,65 +15,73 @@ import {
 
 export const useCart = () => {
   const dispatch = useDispatch();
-  const { isAuthenticated, isSessionValid } = useAuth();
+  const { isAuthenticated } = useAuth();
   const cart = useSelector((state) => state.cart);
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [lastSync, setLastSync] = useState(null);
 
-  // -------------------------------
-  // CART OPERATIONS
-  // -------------------------------
+  // Load cart
   const loadCart = useCallback(async () => {
-    if (!isAuthenticated || !isSessionValid) return;
+    if (!isAuthenticated || !cart.cartId) return;
     try {
       await dispatch(fetchCart(cart.cartId)).unwrap();
       setLastSync(Date.now());
-    } catch (error) {
+    } catch {
       dispatch(setCartError('Failed to load cart.'));
     }
-  }, [dispatch, isAuthenticated, isSessionValid, cart.cartId]);
+  }, [dispatch, isAuthenticated, cart.cartId]);
 
-  const addToCart = useCallback(async (productData) => {
-    if (!isAuthenticated || !isSessionValid) throw new Error('Please login to add items');
-    if (!productData.productId || productData.quantity < 1) throw new Error('Invalid product data');
+  // Add to cart (supports both styles)
+  const addToCart = useCallback(async (productOrId, qty) => {
+    if (!isAuthenticated) throw new Error('Please login to add items');
+
+    let productData;
+    if (typeof productOrId === "object") {
+      productData = productOrId;
+    } else {
+      productData = { productId: productOrId, quantity: qty };
+    }
+
+    if (!productData.productId || productData.quantity < 1) {
+      throw new Error('Invalid product data');
+    }
 
     try {
       setIsUpdating(true);
       const cartId = cart.cartId || (await dispatch(createCart()).unwrap()).cartId;
       await dispatch(addToCartAction({ cartId, ...productData })).unwrap();
       dispatch(openCartDrawer());
-      setTimeout(() => { if (cart.isDrawerOpen) dispatch(closeCartDrawer()); }, 3000);
+      setTimeout(() => {
+        if (cart.isDrawerOpen) dispatch(closeCartDrawer());
+      }, 3000);
     } catch (error) {
       dispatch(setCartError(error.message || 'Failed to add item'));
       throw error;
     } finally {
       setIsUpdating(false);
     }
-  }, [dispatch, isAuthenticated, isSessionValid, cart.cartId, cart.isDrawerOpen]);
+  }, [dispatch, isAuthenticated, cart.cartId, cart.isDrawerOpen]);
 
   const updateQuantity = useCallback(async (itemId, quantity) => {
-    if (!isAuthenticated || !isSessionValid) throw new Error('Please login to update cart');
+    if (!isAuthenticated) throw new Error('Please login to update cart');
     if (quantity < 1) throw new Error('Quantity must be at least 1');
-
     await dispatch(updateCartItem({ itemId, quantity })).unwrap();
     if (cart.cartId) dispatch(fetchCart(cart.cartId));
-  }, [dispatch, isAuthenticated, isSessionValid, cart.cartId]);
+  }, [dispatch, isAuthenticated, cart.cartId]);
 
   const removeItem = useCallback(async (itemId) => {
-    if (!isAuthenticated || !isSessionValid) throw new Error('Please login to remove items');
+    if (!isAuthenticated) throw new Error('Please login to remove items');
     await dispatch(removeFromCart(itemId)).unwrap();
     if (cart.cartId) dispatch(fetchCart(cart.cartId));
-  }, [dispatch, isAuthenticated, isSessionValid, cart.cartId]);
+  }, [dispatch, isAuthenticated, cart.cartId]);
 
   const clearCartSafe = useCallback(async (confirm = false) => {
     if (!confirm) throw new Error('Confirmation required to clear cart');
     await dispatch(createCart()).unwrap();
   }, [dispatch]);
 
-  // -------------------------------
-  // UTILITY FUNCTIONS
-  // -------------------------------
+  // Utils
   const getCartTotal = useCallback(() => cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0), [cart.items]);
   const getCartItemCount = useCallback(() => cart.items.reduce((sum, item) => sum + item.quantity, 0), [cart.items]);
   const isInCart = useCallback(productId => cart.items.some(item => item.productId === productId), [cart.items]);
@@ -83,13 +90,12 @@ export const useCart = () => {
     return item ? item.quantity : 0;
   }, [cart.items]);
 
+  // Drawer controls
   const toggleDrawer = () => dispatch(toggleCartDrawer());
   const openDrawer = () => dispatch(openCartDrawer());
   const closeDrawer = () => dispatch(closeCartDrawer());
 
-  // -------------------------------
-  // EFFECTS
-  // -------------------------------
+  // Effects
   useEffect(() => {
     if (isAuthenticated && !cart.cartId) dispatch(createCart());
   }, [isAuthenticated, cart.cartId, dispatch]);
